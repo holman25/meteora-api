@@ -20,7 +20,7 @@ jobs:
       - name: Copy env file for CI
         run: |
           cp .env.example .env
-          # Ajustes para CI
+          # Ajustes para entorno de CI
           sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env || true
           sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env || true
           sed -i 's/^DB_HOST=.*/DB_HOST=mysql/' .env || true
@@ -30,6 +30,8 @@ jobs:
           sed -i 's/^REDIS_HOST=.*/REDIS_HOST=redis/' .env || true
           echo "API_KEY=testing_key" >> .env
           echo "OPENAI_MOCK=true" >> .env
+          # 🔐 Generar clave de aplicación para pruebas
+          echo "APP_KEY=base64:$(openssl rand -base64 32)" >> .env
 
       - name: Build containers
         run: docker compose build
@@ -47,10 +49,8 @@ jobs:
       - name: Install PHP dependencies (in container)
         run: docker compose exec -T api composer install -q --no-interaction --no-progress
 
-      - name: Generate app key & run migrations (in container)
-        run: |
-          docker compose exec -T api php artisan key:generate
-          docker compose exec -T api php artisan migrate --force
+      - name: Run migrations (in container)
+        run: docker compose exec -T api php artisan migrate --force
 
       - name: Run test suite (Pest)
         run: docker compose exec -T api ./vendor/bin/pest -p --colors=always
