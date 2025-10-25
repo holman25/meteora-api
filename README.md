@@ -1,8 +1,9 @@
 # 🪐 **MeteoraAPI**
 
-**MeteoraAPI** es un proyecto  desarrollado por **Holman Alba**, diseñado como un *chatbot inteligente del clima* que integra **OpenAI** y **Open-Meteo** mediante un backend **Laravel 12** totalmente **Dockerizado**.
+**MeteoraAPI** es un proyecto desarrollado por **Holman Alba**, diseñado como un *chatbot inteligente del clima* que integra **OpenAI** y **Open-Meteo**, construido sobre un backend **Laravel 12** completamente **dockerizado**.
 
-Su objetivo es permitir consultas naturales del clima en diferentes ubicaciones, con respuestas generadas por inteligencia artificial, persistencia en base de datos y soporte para pruebas mediante **Postman**.
+Su objetivo es permitir consultas naturales sobre el clima en cualquier ubicación, con respuestas generadas por inteligencia artificial, almacenamiento persistente en base de datos y soporte para pruebas mediante **Postman** y **Pest/PHPUnit**.
+
 ---
 
 ## ⚙️ **Guía de instalación**
@@ -11,8 +12,8 @@ Su objetivo es permitir consultas naturales del clima en diferentes ubicaciones,
 - [Git](https://git-scm.com/downloads)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - [Composer](https://getcomposer.org/download/)
-- PHP 8.3 (solo si deseas correr el proyecto sin Docker)
-- [Postman](https://www.postman.com/downloads/) para pruebas de API
+- PHP 8.3 (opcional, solo si deseas correrlo sin Docker)
+- [Postman](https://www.postman.com/downloads/) para probar los endpoints
 
 ---
 
@@ -20,7 +21,7 @@ Su objetivo es permitir consultas naturales del clima en diferentes ubicaciones,
 
 ### 1️⃣ Clonar el proyecto
 ```bash
-git clone https://github.com/holmanalba/meteoraapi.git
+git clone https://github.com/holman25/meteora-api.git
 cd meteoraapi
 ```
 
@@ -48,13 +49,13 @@ OPEN_METEO_BASE=https://api.open-meteo.com/v1
 El archivo `docker-compose.yml` define los servicios base:
 
 | Servicio | Imagen | Puerto | Descripción |
-|-----------|--------|---------|--------------|
-| `nginx` | nginx:1.25-alpine | 8080 | Servidor web |
-| `api` | php:8.3-fpm | interno 9000 | Backend Laravel |
-| `mysql` | mysql:8.0 | 3308 | Base de datos |
-| `redis` | redis:7-alpine | 6380 | Cache y colas |
+|-----------|---------|--------|-------------|
+| **nginx** | `nginx:1.25-alpine` | 8080 | Servidor web |
+| **api** | `php:8.3-fpm` | interno 9000 | Backend Laravel |
+| **mysql** | `mysql:8.0` | 3308 | Base de datos |
+| **redis** | `redis:7-alpine` | 6380 | Cache y colas |
 
-### 🔧 Construir imágenes
+### 🔧 Construir las imágenes
 ```bash
 docker compose build
 ```
@@ -87,7 +88,8 @@ Deberías ver la página de bienvenida de Laravel.
 ```bash
 GET http://localhost:8080/api/v1/health
 ```
-Respuesta esperada:
+
+**Respuesta esperada**
 ```json
 {
   "status": true,
@@ -101,12 +103,12 @@ Respuesta esperada:
 
 ### Flujo de chat (Postman)
 1. `POST /api/v1/chats` → crea un nuevo chat  
-2. `POST /api/v1/chats/{chatId}/messages` → envía mensaje  
-3. `GET /api/v1/chats/{chatId}/messages` → historial  
-4. `POST /api/v1/messages/{messageId}/retry` → reintenta respuesta
+2. `POST /api/v1/chats/{chatId}/messages` → envía un mensaje  
+3. `GET /api/v1/chats/{chatId}/messages` → obtiene historial  
+4. `POST /api/v1/messages/{messageId}/retry` → reintenta una respuesta
 
-Colección Postman disponible en:  
-📁 `/postman/MeteoraAPI.postman_collection.json`
+Colección Postman disponible en  
+📁 `postman/MeteoraAPI.postman_collection.json`
 
 ---
 
@@ -126,6 +128,9 @@ Meteora/
 │   ├── api/Dockerfile
 │   └── nginx/default.conf
 ├── routes/api.php
+├── tests/
+│   ├── Feature/
+│   └── Unit/
 ├── docker-compose.yml
 └── README.md
 ```
@@ -136,39 +141,52 @@ Meteora/
 
 | Acción | Comando |
 |--------|----------|
-| Ver logs de PHP | `docker compose logs -f api` |
-| Ver logs de Nginx | `docker compose logs -f nginx` |
+| Ver logs PHP | `docker compose logs -f api` |
+| Ver logs Nginx | `docker compose logs -f nginx` |
 | Ejecutar Artisan | `docker compose exec api php artisan <comando>` |
-| Acceder a contenedor | `docker compose exec api bash` |
+| Entrar al contenedor | `docker compose exec api bash` |
 | Detener servicios | `docker compose down` |
+| Ejecutar tests | `docker compose exec api ./vendor/bin/pest -p --colors=always` |
 
 ---
 
+## 🧾 **Estructura de Base de Datos**
 
-## 📊 Estructura de Base de Datos
+Meteora utiliza **MySQL 8** y **Eloquent ORM** con las tablas principales:
 
-Meteora utiliza MySQL 8 y Laravel Eloquent con las siguientes tablas principales:
-
-- **chats** → contenedor de conversación.
-- **messages** → mensajes enviados/recibidos.
-- **tool_calls** → registros de llamadas a APIs externas.
+- `chats` → contenedor de conversación  
+- `messages` → mensajes enviados/recibidos  
+- `tool_calls` → registros de llamadas a APIs externas  
 
 Cada tabla usa **UUIDs (CHAR(36))** y mantiene relaciones normalizadas.
 
+---
 
-## 🧭 **Notas de desarrollo**
-- Proyecto basado en **Laravel 11** con arquitectura limpia (Controllers, Services, DTOs, Actions).  
-- Todos los endpoints responden en **JSON**.  
-- Se incluyen **comentarios de validación** (``) al final de cada archivo `.php` y `.vue`.  
-- Preparado para pruebas **PHPUnit** y despliegue **Dockerizado**.  
+## 🧪 **Pruebas automáticas**
+
+El proyecto incluye un conjunto completo de **tests con Pest**:
+- Validan los endpoints del API.
+- Simulan respuestas de OpenAI y Open-Meteo.
+- Verifican persistencia en BD y formato JSON.
+- Se ejecutan automáticamente en CI/CD (GitHub Actions).
 
 ---
 
-## 💡 **Futuras mejoras**
-- Implementar frontend **Vue.js 3 + Tailwind CSS**.
-- Autenticación con tokens.
-- Logs estructurados por sesión.
-- Integración con OpenAI Realtime API.
+## ⚙️ **Integración continua (CI/CD)**
+
+Un flujo básico está definido en `.github/workflows/tests.yml`:
+
+- Se ejecuta en cada *push* o *pull request*.  
+- Usa **PHP 8.3** y base de datos **SQLite** para pruebas.  
+- Corre todos los tests con `vendor/bin/pest`.  
+- Muestra el estado de la build en GitHub.
+
+**Badge recomendado (README):**
+```markdown
+![CI](https://github.com/holmanalba/meteoraapi/actions/workflows/tests.yml/badge.svg)
+```
+
+---
 
 ---
 

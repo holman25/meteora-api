@@ -1,0 +1,63 @@
+name: CI - MeteoraAPI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Copy env file for CI
+        run: |
+          cp .env.example .env
+          # Ajustes para CI
+          sed -i 's/^APP_ENV=.*/APP_ENV=testing/' .env || true
+          sed -i 's/^APP_DEBUG=.*/APP_DEBUG=false/' .env || true
+          sed -i 's/^DB_HOST=.*/DB_HOST=mysql/' .env || true
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=weather_chat/' .env || true
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=laravel/' .env || true
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=laravel/' .env || true
+          sed -i 's/^REDIS_HOST=.*/REDIS_HOST=redis/' .env || true
+          echo "API_KEY=testing_key" >> .env
+          echo "OPENAI_MOCK=true" >> .env
+
+      - name: Build containers
+        run: docker compose build
+
+      - name: Start services
+        run: docker compose up -d mysql redis api
+
+      - name: Wait for MySQL
+        run: |
+          for i in `seq 1 30`; do
+            docker compose exec -T mysql mysqladmin ping -h "localhost" --silent && break
+            sleep 2
+          done
+
+      - name: Install PHP dependencies (in container)
+        run: docker compose exec -T api composer install -q --no-interaction --no-progress
+
+      - name: Generate app key & run migrations (in container)
+        run: |
+          docker compose exec -T api php artisan key:generate
+          docker compose exec -T api php artisan migrate --force
+
+      - name: Run test suite (Pest)
+        run: docker compose exec -T api ./vendor/bin/pest -p --colors=always
+
+      - name: Show container logs on failure
+        if: failure()
+        run: |
+          docker compose logs --no-color api
+          docker compose logs --no-color mysql
+          docker compose logs --no-color redis

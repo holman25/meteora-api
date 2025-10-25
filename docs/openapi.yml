@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: MeteoraAPI
+  version: "1.0.0"
+  description: |
+    API de chatbot del clima (Laravel 12 + OpenAI + Open-Meteo).
+    Rutas bajo `/api/v1`. Autenticación por API Key vía header `X-Api-Key` (excepto /health).
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  schemas:
+    Chat:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Message:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        chat_id: { type: string }
+        role: { type: string, enum: [user, assistant] }
+        content: { type: string }
+        model: { type: string, nullable: true }
+        status: { type: string, enum: [ok, error] }
+        error_code: { type: string, nullable: true }
+        metadata: { type: object, nullable: true, additionalProperties: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+paths:
+  /health:
+    get:
+      summary: Health check (público)
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: boolean }
+                  checks:
+                    type: object
+                    additionalProperties: { type: boolean }
+  /ai/ping:
+    get:
+      summary: Verificación de conexión a OpenAI
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Resultado del ping
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  status: { type: integer }
+                  model: { type: string, nullable: true }
+                  latency_ms: { type: integer, nullable: true }
+                  preview: { type: string, nullable: true }
+                  error_code: { type: string, nullable: true }
+  /weather/ping:
+    get:
+      summary: Verificación de proveedor de clima
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: lat
+          schema: { type: number, format: float }
+        - in: query
+          name: lon
+          schema: { type: number, format: float }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  status: { type: integer }
+                  latency_ms: { type: integer }
+                  cached: { type: boolean, nullable: true }
+                  cache_expires_in: { type: integer, nullable: true }
+                  summary:
+                    type: object
+                    properties:
+                      latitude: { type: number }
+                      longitude: { type: number }
+                      elevation: { type: number }
+                  error: { nullable: true }
+  /chats:
+    post:
+      summary: Crear chat
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "201":
+          description: Chat creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Chat'
+  /chats/{chat}/messages:
+    get:
+      summary: Listar mensajes de un chat
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: chat
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Lista de mensajes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+    post:
+      summary: Enviar mensaje al chat
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: chat
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string }
+                location:
+                  type: object
+                  properties:
+                    lat: { type: number }
+                    lon: { type: number }
+                date: { type: string, description: "p.ej. 'hoy', 'mañana' u otra fecha" }
+      responses:
+        "201":
+          description: Mensajes creados (user y assistant)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/Message' }
+                  assistant: { $ref: '#/components/schemas/Message' }
+  /messages/{message}/retry:
+    post:
+      summary: Reintentar generación de respuesta para un mensaje
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: message
+          required: true
+          schema: { type: string }
+      responses:
+        "201":
+          description: Mensaje reintentado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
