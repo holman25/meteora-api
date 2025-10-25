@@ -5,9 +5,29 @@
         "description": "Colección de endpoints del proyecto Meteora (Laravel + OpenAI + Open-Meteo).",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
+    "auth": {
+        "type": "apikey",
+        "apikey": [
+            {
+                "key": "key",
+                "value": "X-Api-Key",
+                "type": "string"
+            },
+            {
+                "key": "value",
+                "value": "{{api_key}}",
+                "type": "string"
+            },
+            {
+                "key": "in",
+                "value": "header",
+                "type": "string"
+            }
+        ]
+    },
     "item": [
         {
-            "name": "Health Check",
+            "name": "Health Check (público)",
             "request": {
                 "method": "GET",
                 "header": [],
@@ -21,6 +41,9 @@
                         "v1",
                         "health"
                     ]
+                },
+                "auth": {
+                    "type": "noauth"
                 }
             }
         },
@@ -68,7 +91,7 @@
                 "method": "GET",
                 "header": [],
                 "url": {
-                    "raw": "{{base_url}}/api/v1/weather/ping?lat=4.700&lon=-74.100",
+                    "raw": "{{base_url}}/api/v1/weather/ping",
                     "host": [
                         "{{base_url}}"
                     ],
@@ -87,26 +110,6 @@
                             "key": "lon",
                             "value": "-74.100"
                         }
-                    ]
-                }
-            }
-        },
-        {
-            "name": "Listar mensajes de un chat",
-            "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                    "raw": "{{base_url}}/api/v1/chats/{{chat_id}}/messages",
-                    "host": [
-                        "{{base_url}}"
-                    ],
-                    "path": [
-                        "api",
-                        "v1",
-                        "chats",
-                        "{{chat_id}}",
-                        "messages"
                     ]
                 }
             }
@@ -144,10 +147,30 @@
                         "value": "application/json"
                     }
                 ],
+                "url": {
+                    "raw": "{{base_url}}/api/v1/chats/{{chat_id}}/messages",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v1",
+                        "chats",
+                        "{{chat_id}}",
+                        "messages"
+                    ]
+                },
                 "body": {
                     "mode": "raw",
-                    "raw": "{\n    \"content\": \"¿Lloverá en Bogotá mañana?\",\n    \"location\": {\n        \"lat\": 4.711,\n        \"lon\": -74.0721\n    },\n    \"date\": \"mañana\"\n}"
-                },
+                    "raw": "{\"content\": \"¿Lloverá en Bogotá mañana?\", \"location\": {\"lat\": 4.711, \"lon\": -74.0721}, \"date\": \"mañana\"}"
+                }
+            }
+        },
+        {
+            "name": "Listar mensajes de un chat",
+            "request": {
+                "method": "GET",
+                "header": [],
                 "url": {
                     "raw": "{{base_url}}/api/v1/chats/{{chat_id}}/messages",
                     "host": [
@@ -193,6 +216,10 @@
         {
             "key": "base_url",
             "value": "http://localhost:8080"
+        },
+        {
+            "key": "api_key",
+            "value": "meteora_super_key_123"
         },
         {
             "key": "chat_id",

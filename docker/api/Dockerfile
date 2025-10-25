@@ -3,7 +3,8 @@ FROM php:8.3-fpm
 # Extensiones necesarias para Laravel
 RUN apt-get update && apt-get install -y \
     git unzip libicu-dev libzip-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo pdo_mysql intl zip
+    && docker-php-ext-install pdo pdo_mysql intl zip \
+    && docker-php-ext-install opcache
 
 # Composer dentro de la imagen
 COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
