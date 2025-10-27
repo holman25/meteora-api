@@ -50,7 +50,6 @@ class ChatOrchestrator
         $toolSummaries = [];
         $wxData = null;
 
-        //Consulta Open-Meteo si aplica
         if ($intent === Intent::WEATHER) {
             $lat = (float) Arr::get($payload, 'location.lat', 4.711);
             $lon = (float) Arr::get($payload, 'location.lon', -74.0721);
@@ -77,7 +76,6 @@ class ChatOrchestrator
             $wxData = $wxResp['ok'] ? $wxResp['data'] : null;
         }
 
-        // Generar respuesta final en español
         [$assistantContent, $modelUsed, $aiLatency, $aiError, $aiErrorCode] =
             $this->composeAnswer($payload, $intent, $wxData);
 
@@ -130,6 +128,17 @@ class ChatOrchestrator
 
     protected function composeAnswer(array $payload, Intent $intent, ?array $wx): array
     {
+        if ($intent === Intent::SMALLTALK) {
+            return [
+                "👋 ¡Hola! Soy **Meteora**, tu asistente del clima.
+                        Puedo contarte cómo estará el tiempo en cualquier ciudad del mundo.
+                        Por ejemplo: *¿Lloverá en Madrid mañana?* ☁️",
+                'none',
+                0,
+                null,
+                null,
+            ];
+        }
         $start = microtime(true);
         $model = config('services.openai.model', 'gpt-4o-mini');
 
@@ -142,8 +151,7 @@ class ChatOrchestrator
                     "Reglas: 1) Si hay datos de clima en 'contexto', cítalos en lenguaje natural, sin JSON. ".
                     "2) Si no hay datos suficientes, dilo explícitamente y sugiere qué falta (fecha o ubicación). ".
                     "3) Evita afirmar con certeza si no hay pronóstico; usa términos probabilísticos. ".
-                    "4) No inventes. 5) Responde en 3 a 6 líneas, con un emoji adecuado. ".
-                    "Formato: usa **negritas** para valores clave (temp, lluvia, viento).",
+                    "4) No inventes. 5) Responde en 3 a 6 líneas, con un emoji adecuado. ",
             ],
             [
                 'role' => 'user',
@@ -177,8 +185,8 @@ class ChatOrchestrator
                 'content' =>
                     "Ejemplo ideal:\n".
                     "Usuario: ¿Lloverá en Bogotá mañana?\n".
-                    "Asistente: 🌧️ Para **mañana** en Bogotá: prob. de **lluvia 40–60%**, temp. **13–22°C**, vientos **10–18 km/h**. ".
-                    "Te confirmo la franja horaria si me dices una hora aproximada.",
+                    "Asistente: 🌧️ Para mañana en Bogotá: probabilidad de lluvia 40–60%, temperatura entre 13–22°C y vientos de **10–18 km/h**. " .
+                    "¿Quieres que revise otra ciudad o día?",
             ],
         ];
 

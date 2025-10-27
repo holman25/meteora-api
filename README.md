@@ -195,3 +195,27 @@ Desarrollado con 💙 por **Holman Alba**
 📧 Contacto: [albaholman803@gmail.com](mailto:albaholman803@gmail.com)  
 
 ---
+
+## 📝 Licencia
+
+**MIT License**  
+Este proyecto es de uso educativo y demostrativo. Puedes modificarlo y adaptarlo libremente citando la fuente.
+
+---
+
+## 🔮 Implementaciones Futuras
+
+En próximas versiones de **Meteora** se planea ampliar sus capacidades más allá de la ubicación actual del usuario. Algunas mejoras previstas incluyen:
+
+- 🌍 **Consultas multi-ciudad:** permitir al usuario preguntar por el clima en diferentes ciudades o países sin necesidad de cambiar su ubicación física.  
+- 🧭 **Selección manual de localización:** agregar un mapa o buscador para establecer ubicaciones personalizadas.  
+
+
+---
+
+> 🌐 **Demo en producción (Render):**  
+> [https://meteora-api-5ozs.onrender.com/api/v1/health](https://meteora-api-5ozs.onrender.com/api/v1/health)  
+> ⚠️ *Nota:* Si la API tarda en responder, es porque Render debe reactivar la instancia gratuita tras un periodo de inactividad. Este proceso puede generar demoras de hasta **50 segundos o más**.  
+> 🧭 **Repositorio oficial:**  
+> [https://github.com/holman25/meteora-api](https://github.com/holman25/meteora-api)
+
