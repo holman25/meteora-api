@@ -10,8 +10,7 @@ COPY . /var/www/html
 
 RUN composer install --no-dev --optimize-autoloader
 
-COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
-RUN sed -i 's/listen 80;/listen ${PORT};/g' /etc/nginx/conf.d/default.conf
+COPY docker/nginx/default.conf.template /etc/nginx/conf.d/default.conf.template
 
 COPY docker/supervisord.conf /etc/supervisord.conf
 COPY docker/entrypoint.sh /entrypoint.sh
