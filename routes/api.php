@@ -61,7 +61,6 @@ Route::prefix('v1')->group(function () {
             ]);
         });
 
-        // 💬 Chat & mensajes
         Route::post('/chats', [ChatController::class, 'store']);
         Route::post('/chats/{chat}/messages', [MessageController::class, 'store']);
         Route::get('/chats/{chat}/messages', [MessageController::class, 'index']);
