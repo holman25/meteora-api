@@ -66,5 +66,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/chats/{chat}/messages', [MessageController::class, 'store']);
         Route::get('/chats/{chat}/messages', [MessageController::class, 'index']);
         Route::post('/messages/{message}/retry', [MessageController::class, 'retry']);
+        Route::get('/chats', [ChatController::class, 'index']);
     });
 });

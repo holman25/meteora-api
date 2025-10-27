@@ -1,17 +1,35 @@
-FROM php:8.3-fpm
+FROM php:8.3-fpm-alpine
 
-# Extensiones necesarias para Laravel
-RUN apt-get update && apt-get install -y \
-    git unzip libicu-dev libzip-dev libonig-dev libxml2-dev \
-    && docker-php-ext-install pdo pdo_mysql intl zip \
-    && docker-php-ext-install opcache
+# 1) Extensiones PHP necesarias (ajusta a tu app)
+RUN docker-php-ext-install pdo pdo_mysql
 
-# Composer dentro de la imagen
-COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+# 2) Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# 3) Nginx + supervisord
+RUN apk add --no-cache nginx supervisor
+
+# 4) Código de la app
 WORKDIR /var/www/html
+COPY . /var/www/html
 
-# Usuario www-data con uid/gid 1000 (compat con Windows montando volumen)
-RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
+# 5) Dependencias y caches
+RUN composer install --no-dev --optimize-autoloader \
+ && php artisan key:generate --force \
+ && php artisan config:cache && php artisan route:cache
 
-CMD ["php-fpm"]
+# 6) Nginx conf (ajusta el server_name y root si es necesario)
+#    IMPORTANTE: que Nginx escuche $PORT
+COPY docker/nginx/default.conf /etc/nginx/conf.d/default.conf
+RUN sed -i 's/listen 80;/listen ${PORT};/g' /etc/nginx/conf.d/default.conf
+
+# 7) Supervisord: levanta php-fpm + nginx
+COPY docker/supervisord.conf /etc/supervisord.conf
+
+# 8) Static/public symlink
+RUN php artisan storage:link || true
+
+ENV PORT=8080
+EXPOSE 8080
+
+CMD ["/usr/bin/supervisord","-c","/etc/supervisord.conf"]
