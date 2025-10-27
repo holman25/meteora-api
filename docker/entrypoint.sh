@@ -3,7 +3,7 @@ set -e
 
 export PORT="${PORT:-8080}"
 
-envsubst < /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
+envsubst '${PORT}' < /etc/nginx/http.d/default.conf.template > /etc/nginx/http.d/default.conf
 mkdir -p /run/nginx
 
 php artisan storage:link || true
